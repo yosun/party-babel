@@ -1,11 +1,16 @@
 import type { StreamingSTTEngine } from './interface.js';
 import { TransformersVoxtralEngine } from './transformers-engine.js';
 import { VLLMRealtimeEngine } from './vllm-engine.js';
+import { MistralAPIEngine } from './mistral-api-engine.js';
 import { commitDetector } from './commit-detector.js';
 import { broadcastToRoom } from '../ws/rooms.js';
 import { config } from '../config.js';
 
 function createEngine(): StreamingSTTEngine {
+  if (config.MISTRAL_API_KEY) {
+    console.log('[stt] Using Mistral API engine');
+    return new MistralAPIEngine();
+  }
   if (config.STT_ENGINE === 'vllm') {
     console.log('[stt] Using vLLM realtime engine');
     return new VLLMRealtimeEngine();
@@ -72,10 +77,16 @@ sttEngine.onError((event) => {
 });
 
 export function getEngineStatus() {
+  const sttEngine = config.MISTRAL_API_KEY ? 'mistral-api' : config.STT_ENGINE;
+  const translationEngine = config.MISTRAL_API_KEY
+    ? 'mistral-api'
+    : config.LOCAL_LLM_URL
+      ? 'llm-http'
+      : 'heuristic';
   return {
     type: 'engine_status' as const,
-    sttEngine: config.STT_ENGINE,
-    translationEngine: config.LOCAL_LLM_URL ? 'llm-http' : 'heuristic',
+    sttEngine,
+    translationEngine,
     latencyMs: config.TRANSCRIPTION_DELAY_MS,
     warnings: [] as string[],
   };

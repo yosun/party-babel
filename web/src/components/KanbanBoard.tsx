@@ -1,9 +1,7 @@
 import type { WorldTask } from '@party-babel/shared';
-import type { Utterance } from '../hooks/useRoom';
 
 interface Props {
   tasks: WorldTask[];
-  utterances: Utterance[];
 }
 
 const BUCKET_COLORS = {
@@ -18,7 +16,7 @@ const BUCKET_HEADERS = {
   Later: { label: 'Later', icon: '🔵', color: 'text-blue-400' },
 };
 
-export function KanbanBoard({ tasks, utterances }: Props) {
+export function KanbanBoard({ tasks }: Props) {
   const scrollToUtterance = (utteranceId: string) => {
     const el = document.getElementById(`utt-${utteranceId}`);
     if (el) {

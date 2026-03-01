@@ -11,6 +11,10 @@ import { broadcastToRoom } from '../ws/rooms.js';
 // Per-room world state
 const roomStates = new Map<string, WorldState>();
 
+export function clearWorldState(roomId: string): void {
+  roomStates.delete(roomId);
+}
+
 function getWorldState(roomId: string): WorldState {
   let state = roomStates.get(roomId);
   if (!state) {

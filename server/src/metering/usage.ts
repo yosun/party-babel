@@ -2,8 +2,12 @@ import type { UsageRecord } from '@party-babel/shared';
 
 /** In-memory usage metering (production would persist to DB) */
 const usageRecords: UsageRecord[] = [];
+const MAX_USAGE_RECORDS = 50_000;
 
 export function recordUsage(roomId: string, userId: string, audioSeconds: number): void {
+  if (usageRecords.length >= MAX_USAGE_RECORDS) {
+    usageRecords.splice(0, MAX_USAGE_RECORDS / 4);
+  }
   usageRecords.push({
     roomId,
     userId,
@@ -14,6 +18,9 @@ export function recordUsage(roomId: string, userId: string, audioSeconds: number
 }
 
 export function recordTranslation(roomId: string, userId: string): void {
+  if (usageRecords.length >= MAX_USAGE_RECORDS) {
+    usageRecords.splice(0, MAX_USAGE_RECORDS / 4);
+  }
   usageRecords.push({
     roomId,
     userId,

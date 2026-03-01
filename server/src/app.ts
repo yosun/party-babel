@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import rateLimit from '@fastify/rate-limit';
+import { z } from 'zod';
 import { config } from './config.js';
 import { handleWsConnection } from './ws/handler.js';
 import { getEngineStatus } from './stt/index.js';
@@ -31,9 +32,13 @@ export async function buildApp() {
   app.get('/engine-status', async () => getEngineStatus());
 
   // ── Simulate conversation ─────────────────────────────
+  const SimulateBody = z.object({ roomId: z.string().min(1).max(64).optional() });
   app.post('/api/simulate', async (req, reply) => {
-    const { roomId } = req.body as { roomId?: string };
-    const id = roomId || `demo-${nanoid(6)}`;
+    const parsed = SimulateBody.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid body', details: parsed.error.issues });
+    }
+    const id = parsed.data.roomId || `demo-${nanoid(6)}`;
     simulateConversation(id);
     return { roomId: id, status: 'started' };
   });

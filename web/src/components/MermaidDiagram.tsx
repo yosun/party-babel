@@ -18,12 +18,14 @@ export function MermaidDiagram({ diagram }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [editSource, setEditSource] = useState('');
   const [renderError, setRenderError] = useState('');
+  const [overrideSource, setOverrideSource] = useState<string | null>(null);
 
   useEffect(() => {
-    if (diagram?.mermaidSource && !editMode) {
-      renderDiagram(diagram.mermaidSource);
+    const source = overrideSource ?? diagram?.mermaidSource;
+    if (source && !editMode) {
+      renderDiagram(source);
     }
-  }, [diagram, editMode]);
+  }, [diagram, editMode, overrideSource]);
 
   const renderDiagram = async (source: string) => {
     if (!containerRef.current) return;
@@ -39,11 +41,11 @@ export function MermaidDiagram({ diagram }: Props) {
 
   const handleEdit = () => {
     setEditMode(true);
-    setEditSource(diagram?.mermaidSource || '');
+    setEditSource(overrideSource ?? diagram?.mermaidSource ?? '');
   };
 
   const handleApply = () => {
-    renderDiagram(editSource);
+    setOverrideSource(editSource);
     setEditMode(false);
   };
 

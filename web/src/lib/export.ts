@@ -1,5 +1,4 @@
 import type { Utterance, RoomState } from '../hooks/useRoom';
-import type { WorldTask, WorldEntity, WorldRelation, WorldDiagram } from '@party-babel/shared';
 
 /**
  * Export session data in various formats.

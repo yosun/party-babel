@@ -5,6 +5,8 @@ const envSchema = z.object({
   VOXTRAL_MODEL_ID: z.string().default('mistralai/Voxtral-Mini-4B-Realtime-2602'),
   TRANSCRIPTION_DELAY_MS: z.coerce.number().int().positive().default(480),
   VLLM_REALTIME_URL: z.string().default('http://localhost:8000/v1/realtime'),
+  MISTRAL_API_KEY: z.string().default(''),
+  MISTRAL_API_URL: z.string().default('https://api.mistral.ai'),
   LOCAL_LLM_URL: z.string().default(''),
   DATABASE_URL: z.string().default('postgresql://party:party@localhost:5432/party_babel'),
   JWT_SECRET: z.string().default('dev-secret-change-me'),

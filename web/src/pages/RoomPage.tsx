@@ -16,22 +16,27 @@ export function RoomPage() {
   const [visualize, setVisualize] = useState(false);
   const stopRef = useRef<(() => void) | null>(null);
 
-  const userId = sessionStorage.getItem('pb:userId') || 'guest';
-  const displayName = sessionStorage.getItem('pb:displayName') || 'Guest';
-  const speakLang = sessionStorage.getItem('pb:speakLang') || 'en';
-  const targetLang = sessionStorage.getItem('pb:targetLang') || 'es';
-  const inputMode = (sessionStorage.getItem('pb:inputMode') || 'per_user_mic') as InputMode;
+  // Read session params once on mount
+  const [userId] = useState(() => sessionStorage.getItem('pb:userId') || 'guest');
+  const [displayName] = useState(() => sessionStorage.getItem('pb:displayName') || 'Guest');
+  const [speakLang] = useState(() => sessionStorage.getItem('pb:speakLang') || 'en');
+  const [targetLang] = useState(() => sessionStorage.getItem('pb:targetLang') || 'es');
+  const [inputMode] = useState<InputMode>(() => (sessionStorage.getItem('pb:inputMode') || 'per_user_mic') as InputMode);
 
   const { connState, roomState, joinRoom, send, toggleVisualize, disconnect } = useRoom(roomId!);
 
-  // Join room on mount
+  // Join room on mount, cleanup mic + ws on unmount
   useEffect(() => {
     if (!joined && roomId) {
       joinRoom({ userId, displayName, speakLang, targetLang, inputMode });
       setJoined(true);
     }
-    return () => disconnect();
-  }, [roomId]);
+    return () => {
+      stopRef.current?.();
+      stopRef.current = null;
+      disconnect();
+    };
+  }, [roomId, joined, joinRoom, userId, displayName, speakLang, targetLang, inputMode, disconnect]);
 
   const toggleRecording = useCallback(async () => {
     if (recording) {
@@ -129,7 +134,6 @@ export function RoomPage() {
               relations={roomState.relations}
               tasks={roomState.tasks}
               diagram={roomState.diagram}
-              utterances={roomState.utterances}
             />
           </div>
         )}

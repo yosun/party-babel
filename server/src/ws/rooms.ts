@@ -1,4 +1,5 @@
 import type { InputMode } from '@party-babel/shared';
+import { clearWorldState } from '../semantics/index.js';
 
 export interface RoomUser {
   userId: string;
@@ -18,6 +19,7 @@ export interface Room {
 }
 
 const rooms = new Map<string, Room>();
+const connIndex = new Map<string, { roomId: string; userId: string }>();
 
 export function getOrCreateRoom(roomId: string, inputMode: InputMode): Room {
   let room = rooms.get(roomId);
@@ -40,21 +42,23 @@ export function getRoom(roomId: string): Room | undefined {
 
 export function addUserToRoom(room: Room, user: RoomUser): void {
   room.users.set(user.userId, user);
+  connIndex.set(user.connId, { roomId: room.roomId, userId: user.userId });
 }
 
 export function removeUserByConn(connId: string): { roomId: string; userId: string } | undefined {
-  for (const [roomId, room] of rooms) {
-    for (const [userId, user] of room.users) {
-      if (user.connId === connId) {
-        room.users.delete(userId);
-        if (room.users.size === 0) {
-          rooms.delete(roomId);
-        }
-        return { roomId, userId };
-      }
+  const entry = connIndex.get(connId);
+  if (!entry) return undefined;
+  connIndex.delete(connId);
+
+  const room = rooms.get(entry.roomId);
+  if (room) {
+    room.users.delete(entry.userId);
+    if (room.users.size === 0) {
+      rooms.delete(entry.roomId);
+      clearWorldState(entry.roomId);
     }
   }
-  return undefined;
+  return entry;
 }
 
 export function broadcastToRoom(roomId: string, message: object, excludeUserId?: string): void {

@@ -1,5 +1,4 @@
 import type { WorldEntity, WorldRelation, WorldTask, WorldDiagram } from '@party-babel/shared';
-import type { Utterance } from '../hooks/useRoom';
 import { ConceptGraph } from './ConceptGraph';
 import { MermaidDiagram } from './MermaidDiagram';
 import { KanbanBoard } from './KanbanBoard';
@@ -9,10 +8,9 @@ interface Props {
   relations: WorldRelation[];
   tasks: WorldTask[];
   diagram: WorldDiagram | null;
-  utterances: Utterance[];
 }
 
-export function VisualizePanel({ entities, relations, tasks, diagram, utterances }: Props) {
+export function VisualizePanel({ entities, relations, tasks, diagram }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Top half: graph + diagram */}
@@ -44,7 +42,7 @@ export function VisualizePanel({ entities, relations, tasks, diagram, utterances
           Action Board
         </div>
         <div className="flex-1 overflow-auto">
-          <KanbanBoard tasks={tasks} utterances={utterances} />
+          <KanbanBoard tasks={tasks} />
         </div>
       </div>
     </div>

@@ -107,9 +107,12 @@ class CommitDetector {
   private emit(event: CommitEvent): void {
     for (const cb of this.callbacks) {
       try {
-        cb(event);
+        const result = cb(event);
+        if (result instanceof Promise) {
+          result.catch(() => {});
+        }
       } catch {
-        // swallow callback errors to not break the pipeline
+        // swallow sync callback errors to not break the pipeline
       }
     }
   }

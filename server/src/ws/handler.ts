@@ -17,6 +17,9 @@ import { recordUsage } from '../metering/usage.js';
 const WS_MSG_RATE_LIMIT = 100; // max messages per second per connection
 const rateCounts = new Map<string, { count: number; resetAt: number }>();
 
+// Connection → user binding for security
+const connUsers = new Map<string, { userId: string; roomId: string }>();
+
 function checkRate(connId: string): boolean {
   const now = Date.now();
   let entry = rateCounts.get(connId);
@@ -69,14 +72,23 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
             connId,
             ws,
           });
+          connUsers.set(connId, { userId: msg.userId, roomId: msg.roomId });
           broadcastToRoom(msg.roomId, getRoomState(room));
-          sttEngine.startSession({ roomId: msg.roomId, speakerId: msg.userId, speakLang: msg.speakLang });
+          await sttEngine.startSession({ roomId: msg.roomId, speakerId: msg.userId, speakLang: msg.speakLang });
           break;
         }
 
         case 'audio_chunk': {
+          // Validate userId matches connection binding
+          const bound = connUsers.get(connId);
+          if (!bound || bound.userId !== msg.userId) {
+            ws.send(JSON.stringify({ type: 'error', code: 'AUTH', message: 'User ID mismatch' }));
+            break;
+          }
           const pcm16 = Buffer.from(msg.pcm16_base64, 'base64');
-          const int16 = new Int16Array(pcm16.buffer, pcm16.byteOffset, pcm16.byteLength / 2);
+          // Guarantee alignment for Int16Array
+          const ab = pcm16.buffer.slice(pcm16.byteOffset, pcm16.byteOffset + pcm16.byteLength);
+          const int16 = new Int16Array(ab);
           sttEngine.pushAudioFrame({
             speakerId: msg.userId,
             pcm16: int16,
@@ -116,6 +128,7 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
 
   ws.on('close', () => {
     rateCounts.delete(connId);
+    connUsers.delete(connId);
     const removed = removeUserByConn(connId);
     if (removed) {
       log.info({ connId, ...removed }, 'User disconnected');

@@ -27,6 +27,10 @@ function sanitize(s: string): string {
   return s.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 30);
 }
 
+function escapeLabel(s: string): string {
+  return s.replace(/"/g, '#quot;').replace(/[\[\]{}()]/g, '').replace(/[;:#]/g, '').slice(0, 50);
+}
+
 function generateArchitecture(entities: Map<string, WorldEntity>, relations: WorldRelation[]): string {
   const lines = ['flowchart LR'];
   const addedNodes = new Set<string>();
@@ -36,22 +40,22 @@ function generateArchitecture(entities: Map<string, WorldEntity>, relations: Wor
     if (!addedNodes.has(rel.from)) {
       const entity = entities.get(rel.from);
       const label = entity?.label || rel.from;
-      lines.push(`  ${sanitize(rel.from)}["${label}"]`);
+      lines.push(`  ${sanitize(rel.from)}["${escapeLabel(label)}"]`);
       addedNodes.add(rel.from);
     }
     if (!addedNodes.has(rel.to)) {
       const entity = entities.get(rel.to);
       const label = entity?.label || rel.to;
-      lines.push(`  ${sanitize(rel.to)}["${label}"]`);
+      lines.push(`  ${sanitize(rel.to)}["${escapeLabel(label)}"]`);
       addedNodes.add(rel.to);
     }
-    lines.push(`  ${sanitize(rel.from)} -->|${rel.type}| ${sanitize(rel.to)}`);
+    lines.push(`  ${sanitize(rel.from)} -->|${escapeLabel(rel.type)}| ${sanitize(rel.to)}`);
   }
 
   // Add standalone entities
   for (const [id, entity] of entities) {
     if (!addedNodes.has(id)) {
-      lines.push(`  ${sanitize(id)}["${entity.label}"]`);
+      lines.push(`  ${sanitize(id)}["${escapeLabel(entity.label)}"]`);
       addedNodes.add(id);
     }
   }
@@ -70,12 +74,12 @@ function generateJourney(entities: Map<string, WorldEntity>, relations: WorldRel
   for (const rel of relations) {
     if (!addedNodes.has(rel.from)) {
       const entity = entities.get(rel.from);
-      lines.push(`  ${sanitize(rel.from)}["${entity?.label || rel.from}"]`);
+      lines.push(`  ${sanitize(rel.from)}["${escapeLabel(entity?.label || rel.from)}"]`);
       addedNodes.add(rel.from);
     }
     if (!addedNodes.has(rel.to)) {
       const entity = entities.get(rel.to);
-      lines.push(`  ${sanitize(rel.to)}["${entity?.label || rel.to}"]`);
+      lines.push(`  ${sanitize(rel.to)}["${escapeLabel(entity?.label || rel.to)}"]`);
       addedNodes.add(rel.to);
     }
     lines.push(`  ${sanitize(rel.from)} --> ${sanitize(rel.to)}`);
@@ -96,15 +100,15 @@ function generateTimeline(entities: Map<string, WorldEntity>, tasks: WorldTask[]
 
   if (now.length) {
     lines.push('  section Now');
-    now.forEach((t, i) => lines.push(`    ${t.title.slice(0, 40)} :t${i}, 0, 1`));
+    now.forEach((t, i) => lines.push(`    ${escapeLabel(t.title).slice(0, 40)} :t${i}, 0, 1`));
   }
   if (next.length) {
     lines.push('  section Next');
-    next.forEach((t, i) => lines.push(`    ${t.title.slice(0, 40)} :t${100 + i}, 1, 2`));
+    next.forEach((t, i) => lines.push(`    ${escapeLabel(t.title).slice(0, 40)} :t${100 + i}, 1, 2`));
   }
   if (later.length) {
     lines.push('  section Later');
-    later.forEach((t, i) => lines.push(`    ${t.title.slice(0, 40)} :t${200 + i}, 2, 3`));
+    later.forEach((t, i) => lines.push(`    ${escapeLabel(t.title).slice(0, 40)} :t${200 + i}, 2, 3`));
   }
 
   if (lines.length === 3) {
@@ -121,15 +125,15 @@ function generateDecisionTree(entities: Map<string, WorldEntity>, relations: Wor
   for (const rel of relations) {
     if (!addedNodes.has(rel.from)) {
       const entity = entities.get(rel.from);
-      lines.push(`  ${sanitize(rel.from)}{"${entity?.label || rel.from}"}`);
+      lines.push(`  ${sanitize(rel.from)}{"${escapeLabel(entity?.label || rel.from)}"}`);
       addedNodes.add(rel.from);
     }
     if (!addedNodes.has(rel.to)) {
       const entity = entities.get(rel.to);
-      lines.push(`  ${sanitize(rel.to)}["${entity?.label || rel.to}"]`);
+      lines.push(`  ${sanitize(rel.to)}["${escapeLabel(entity?.label || rel.to)}"]`);
       addedNodes.add(rel.to);
     }
-    lines.push(`  ${sanitize(rel.from)} -->|${rel.type}| ${sanitize(rel.to)}`);
+    lines.push(`  ${sanitize(rel.from)} -->|${escapeLabel(rel.type)}| ${sanitize(rel.to)}`);
   }
 
   if (lines.length === 1) {

@@ -1,34 +1,40 @@
 import { DEMO_SCRIPT } from '@party-babel/shared';
-import { commitDetector } from './stt/commit-detector.js';
-import { broadcastToRoom, getOrCreateRoom, addUserToRoom, getRoomState, getRoom } from './ws/rooms.js';
+import { broadcastToRoom, getOrCreateRoom, addUserToRoom } from './ws/rooms.js';
 import { translateForRoom } from './translation/index.js';
 import { extractAndPatch } from './semantics/index.js';
 import { nanoid } from 'nanoid';
+import type { WebSocket } from 'ws';
 
 /**
  * Simulate a conversation: drives the same pipeline as real audio
  * (commit detector → translation → semantics) without a real mic.
  */
 export function simulateConversation(roomId: string): void {
-  // Create the room if needed
   const room = getOrCreateRoom(roomId, 'per_user_mic');
   room.visualizeEnabled = true;
 
-  // Register simulated speakers (without real WS connections)
-  const speakers = new Map<string, { displayName: string; speakLang: string }>();
+  // Add simulated speakers to the room so translations actually find target languages
+  const added = new Set<string>();
   for (const u of DEMO_SCRIPT) {
-    if (!speakers.has(u.speakerId)) {
-      speakers.set(u.speakerId, { displayName: u.displayName, speakLang: u.speakLang });
+    if (!added.has(u.speakerId)) {
+      added.add(u.speakerId);
+      addUserToRoom(room, {
+        userId: u.speakerId,
+        displayName: u.displayName,
+        speakLang: u.speakLang,
+        targetLang: u.speakLang === 'en' ? 'es' : 'en',
+        connId: `sim-${u.speakerId}`,
+        ws: { readyState: 0, send() {} } as unknown as WebSocket,
+      });
     }
   }
 
   // Schedule each utterance
   for (const utterance of DEMO_SCRIPT) {
-    setTimeout(async () => {
+    setTimeout(() => {
       const utteranceId = nanoid(16);
       const tMs = Date.now();
 
-      // Broadcast transcript_delta (simulating live typing)
       broadcastToRoom(roomId, {
         type: 'transcript_delta',
         roomId,
@@ -37,7 +43,6 @@ export function simulateConversation(roomId: string): void {
         tMs,
       });
 
-      // Broadcast utterance_commit
       broadcastToRoom(roomId, {
         type: 'utterance_commit',
         roomId,
@@ -49,11 +54,11 @@ export function simulateConversation(roomId: string): void {
         langGuess: utterance.speakLang,
       });
 
-      // Translate for room
-      await translateForRoom(roomId, utterance.speakerId, utteranceId, utterance.text, utterance.speakLang);
-
-      // Extract semantics
-      await extractAndPatch(roomId, utteranceId, utterance.text);
+      // Fire-and-forget with proper error handling
+      Promise.all([
+        translateForRoom(roomId, utterance.speakerId, utteranceId, utterance.text, utterance.speakLang),
+        extractAndPatch(roomId, utteranceId, utterance.text),
+      ]).catch(err => console.error('[simulate] Error:', err));
     }, utterance.delayMs);
   }
 }

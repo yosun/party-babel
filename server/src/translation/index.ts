@@ -1,11 +1,16 @@
 import type { TranslationEngine } from './interface.js';
 import { LocalHeuristicTranslator } from './heuristic.js';
 import { LocalLLMHttpTranslator } from './llm-http.js';
+import { MistralAPITranslator } from './mistral-api.js';
 import { getCachedTranslation, setCachedTranslation } from './cache.js';
 import { getRoom, broadcastToRoom } from '../ws/rooms.js';
 import { config } from '../config.js';
 
 function createTranslationEngine(): TranslationEngine {
+  if (config.MISTRAL_API_KEY) {
+    console.log('[translation] Using Mistral API translator');
+    return new MistralAPITranslator();
+  }
   if (config.LOCAL_LLM_URL) {
     console.log('[translation] Using LLM HTTP translator');
     return new LocalLLMHttpTranslator();

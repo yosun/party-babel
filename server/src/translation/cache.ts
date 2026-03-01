@@ -21,10 +21,12 @@ export function getCachedTranslation(utteranceId: string, targetLang: string, te
 
 export function setCachedTranslation(utteranceId: string, targetLang: string, text: string, translation: string): void {
   if (cache.size >= MAX_CACHE_SIZE) {
-    // Evict oldest entries
-    const entries = Array.from(cache.entries()).sort((a, b) => a[1].ts - b[1].ts);
-    for (let i = 0; i < MAX_CACHE_SIZE / 4; i++) {
-      cache.delete(entries[i][0]);
+    // Evict oldest 25% — Map iterates in insertion order, so first entries are oldest
+    const evictCount = MAX_CACHE_SIZE / 4;
+    let i = 0;
+    for (const key of cache.keys()) {
+      if (i++ >= evictCount) break;
+      cache.delete(key);
     }
   }
   cache.set(makeKey(utteranceId, targetLang, text), { translation, ts: Date.now() });

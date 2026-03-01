@@ -26,9 +26,20 @@ export class TransformersVoxtralEngine implements StreamingSTTEngine {
   private finalCallbacks: Array<(e: STTFinalEvent) => void> = [];
   private errorCallbacks: Array<(e: STTErrorEvent) => void> = [];
   private workerReady = false;
+  private destroyed = false;
+  private respawnTimer: ReturnType<typeof setTimeout> | null = null;
+  private respawnAttempts = 0;
+  private static MAX_RESPAWN_ATTEMPTS = 10;
 
   constructor() {
     this.spawnWorker();
+  }
+
+  destroy(): void {
+    this.destroyed = true;
+    if (this.respawnTimer) clearTimeout(this.respawnTimer);
+    this.worker?.kill();
+    this.worker = null;
   }
 
   private spawnWorker(): void {
@@ -60,6 +71,7 @@ export class TransformersVoxtralEngine implements StreamingSTTEngine {
         const text = data.toString().trim();
         if (text.includes('WORKER_READY')) {
           this.workerReady = true;
+          this.respawnAttempts = 0; // reset on successful start
         }
         if (text && !text.includes('WORKER_READY')) {
           // Log stderr but don't treat as fatal
@@ -71,8 +83,13 @@ export class TransformersVoxtralEngine implements StreamingSTTEngine {
     this.worker.on('exit', (code) => {
       console.error(`[voxtral-worker] exited with code ${code}`);
       this.workerReady = false;
-      // Retry after a delay
-      setTimeout(() => this.spawnWorker(), 5000);
+      if (!this.destroyed && this.respawnAttempts < TransformersVoxtralEngine.MAX_RESPAWN_ATTEMPTS) {
+        const delay = Math.min(5000 * 2 ** this.respawnAttempts, 60_000);
+        this.respawnAttempts++;
+        this.respawnTimer = setTimeout(() => this.spawnWorker(), delay);
+      } else if (this.respawnAttempts >= TransformersVoxtralEngine.MAX_RESPAWN_ATTEMPTS) {
+        console.error('[voxtral-worker] max respawn attempts reached, giving up');
+      }
     });
 
     this.worker.on('error', (err) => {

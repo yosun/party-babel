@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { config } from '../config.js';
 
 /** Dev-mode JWT for WebSocket auth — structured for production replacement */
@@ -20,7 +20,9 @@ export function verifyToken(token: string): { userId: string; tier?: string } | 
     if (parts.length !== 3) return null;
     const [header, body, sig] = parts;
     const expected = createHmac('sha256', config.JWT_SECRET).update(`${header}.${body}`).digest('base64url');
-    if (sig !== expected) return null;
+    const sigBuf = Buffer.from(sig, 'base64url');
+    const expectedBuf = Buffer.from(expected, 'base64url');
+    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) return null;
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
