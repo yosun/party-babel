@@ -1,0 +1,27 @@
+{
+  "name": "party-babel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multilingual party room – realtime captions, translation & visualization",
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"pnpm --filter @party-babel/server dev\" \"pnpm --filter @party-babel/web dev\"",
+    "build": "pnpm --filter @party-babel/shared build && pnpm --filter @party-babel/server build && pnpm --filter @party-babel/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @party-babel/server test",
+    "db:migrate": "pnpm --filter @party-babel/server db:migrate",
+    "db:seed": "pnpm --filter @party-babel/server db:seed",
+    "db:generate": "pnpm --filter @party-babel/server db:generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "esbuild", "prisma"]
+  }
+}

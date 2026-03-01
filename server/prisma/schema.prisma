@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String?       @unique
+  displayName  String
+  tier         String        @default("free")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  memberships  Membership[]
+  utterances   Utterance[]
+  translations Translation[]
+  exports      Export[]
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  rooms       Room[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String       @default("member")
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+}
+
+model Room {
+  id             String        @id @default(cuid())
+  name           String
+  organizationId String?
+  inputMode      String        @default("per_user_mic")
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  sessions       Session[]
+}
+
+model Session {
+  id         String        @id @default(cuid())
+  roomId     String
+  startedAt  DateTime      @default(now())
+  endedAt    DateTime?
+  room       Room          @relation(fields: [roomId], references: [id])
+  utterances Utterance[]
+  patches    WorldPatch[]
+  exports    Export[]
+
+  @@index([roomId])
+}
+
+model Utterance {
+  id           String        @id @default(cuid())
+  sessionId    String
+  speakerId    String
+  text         String
+  tStartMs     BigInt
+  tEndMs       BigInt
+  langGuess    String?
+  speakerLabel String?
+  createdAt    DateTime      @default(now())
+  session      Session       @relation(fields: [sessionId], references: [id])
+  speaker      User?         @relation(fields: [speakerId], references: [id])
+  translations Translation[]
+
+  @@index([sessionId])
+}
+
+model Translation {
+  id          String   @id @default(cuid())
+  utteranceId String
+  targetLang  String
+  text        String
+  createdAt   DateTime @default(now())
+  utterance   Utterance @relation(fields: [utteranceId], references: [id])
+  translatorId String?
+  translator  User?    @relation(fields: [translatorId], references: [id])
+
+  @@unique([utteranceId, targetLang])
+  @@index([utteranceId])
+}
+
+model WorldPatch {
+  id           String   @id @default(cuid())
+  sessionId    String
+  patchJson    Json
+  worldVersion Int
+  tMs          BigInt
+  createdAt    DateTime @default(now())
+  session      Session  @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+}
+
+model Export {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  format    String
+  dataJson  Json?
+  fileUrl   String?
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([sessionId])
+}

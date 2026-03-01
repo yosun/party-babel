@@ -1,0 +1,157 @@
+import type { WebSocket } from 'ws';
+import { ClientMessage } from '@party-babel/shared';
+import {
+  getOrCreateRoom,
+  addUserToRoom,
+  removeUserByConn,
+  broadcastToRoom,
+  getRoomState,
+  getRoom,
+} from './rooms.js';
+import { commitDetector } from '../stt/commit-detector.js';
+import { sttEngine } from '../stt/index.js';
+import { translateForRoom } from '../translation/index.js';
+import { extractAndPatch } from '../semantics/index.js';
+import { recordUsage } from '../metering/usage.js';
+
+const WS_MSG_RATE_LIMIT = 100; // max messages per second per connection
+const rateCounts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRate(connId: string): boolean {
+  const now = Date.now();
+  let entry = rateCounts.get(connId);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + 1000 };
+    rateCounts.set(connId, entry);
+  }
+  entry.count++;
+  return entry.count <= WS_MSG_RATE_LIMIT;
+}
+
+export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (...args: any[]) => void; error: (...args: any[]) => void }): void {
+  ws.on('message', async (raw) => {
+    if (!checkRate(connId)) {
+      ws.send(JSON.stringify({ type: 'error', code: 'RATE_LIMIT', message: 'Too many messages' }));
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(String(raw));
+    } catch {
+      ws.send(JSON.stringify({ type: 'error', code: 'PARSE_ERROR', message: 'Invalid JSON' }));
+      return;
+    }
+
+    const result = ClientMessage.safeParse(parsed);
+    if (!result.success) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        code: 'VALIDATION_ERROR',
+        message: result.error.issues.map(i => i.message).join('; '),
+      }));
+      return;
+    }
+
+    const msg = result.data;
+    const corrId = `${connId}:${Date.now()}`;
+    log.info({ corrId, type: msg.type, roomId: msg.roomId }, 'WS message');
+
+    try {
+      switch (msg.type) {
+        case 'join_room': {
+          const room = getOrCreateRoom(msg.roomId, msg.inputMode);
+          addUserToRoom(room, {
+            userId: msg.userId,
+            displayName: msg.displayName,
+            speakLang: msg.speakLang,
+            targetLang: msg.targetLang,
+            connId,
+            ws,
+          });
+          broadcastToRoom(msg.roomId, getRoomState(room));
+          sttEngine.startSession({ roomId: msg.roomId, speakerId: msg.userId, speakLang: msg.speakLang });
+          break;
+        }
+
+        case 'audio_chunk': {
+          const pcm16 = Buffer.from(msg.pcm16_base64, 'base64');
+          const int16 = new Int16Array(pcm16.buffer, pcm16.byteOffset, pcm16.byteLength / 2);
+          sttEngine.pushAudioFrame({
+            speakerId: msg.userId,
+            pcm16: int16,
+            tMs: Date.now(),
+          });
+          recordUsage(msg.roomId, msg.userId, pcm16.byteLength / 2 / 16000);
+          break;
+        }
+
+        case 'set_target_lang': {
+          const room = getRoom(msg.roomId);
+          if (room) {
+            const user = room.users.get(msg.userId);
+            if (user) user.targetLang = msg.targetLang;
+            broadcastToRoom(msg.roomId, getRoomState(room));
+          }
+          break;
+        }
+
+        case 'toggle_visualize': {
+          const room = getRoom(msg.roomId);
+          if (room) room.visualizeEnabled = msg.enabled;
+          break;
+        }
+
+        case 'tag_speaker': {
+          // Store speaker label for shared_mic mode post-processing
+          log.info({ corrId, speakerLabel: msg.speakerLabel }, 'Speaker tagged');
+          break;
+        }
+      }
+    } catch (err) {
+      log.error({ corrId, err }, 'Error handling WS message');
+      ws.send(JSON.stringify({ type: 'error', code: 'INTERNAL', message: 'Internal server error' }));
+    }
+  });
+
+  ws.on('close', () => {
+    rateCounts.delete(connId);
+    const removed = removeUserByConn(connId);
+    if (removed) {
+      log.info({ connId, ...removed }, 'User disconnected');
+      sttEngine.stopSession({ speakerId: removed.userId });
+      const room = getRoom(removed.roomId);
+      if (room) broadcastToRoom(removed.roomId, getRoomState(room));
+    }
+  });
+
+  ws.on('error', (err) => {
+    log.error({ connId, err }, 'WS error');
+  });
+}
+
+// ── Wire up STT engine callbacks ────────────────────────
+commitDetector.onCommit(async (commit) => {
+  const { roomId, speakerId, utteranceId, text, tStartMs, tEndMs, langGuess } = commit;
+
+  // Broadcast utterance_commit
+  broadcastToRoom(roomId, {
+    type: 'utterance_commit',
+    roomId,
+    speakerId,
+    utteranceId,
+    text,
+    tStartMs,
+    tEndMs,
+    langGuess,
+  });
+
+  // Translate for each unique target language in the room
+  await translateForRoom(roomId, speakerId, utteranceId, text, langGuess);
+
+  // Extract semantics and broadcast world_patch
+  const room = getRoom(roomId);
+  if (room?.visualizeEnabled) {
+    await extractAndPatch(roomId, utteranceId, text);
+  }
+});

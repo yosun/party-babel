@@ -1,0 +1,44 @@
+{
+  "name": "@party-babel/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:push": "prisma db push",
+    "stt:transformers": "python3 workers/voxtral_worker.py",
+    "stt:vllm": "echo 'Start vLLM with: vllm serve mistralai/Voxtral-Mini-4B-Realtime-2602 --port 8000' && curl -sf http://localhost:8000/health || echo 'vLLM not running'"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.0.2",
+    "@fastify/rate-limit": "^10.2.1",
+    "@fastify/websocket": "^11.0.2",
+    "@party-babel/shared": "workspace:*",
+    "@prisma/client": "^6.4.1",
+    "fastify": "^5.2.1",
+    "nanoid": "^5.1.2",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/ws": "^8.5.14",
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7",
+    "ws": "^8.18.1"
+  }
+}
