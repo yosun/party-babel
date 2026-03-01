@@ -9,7 +9,7 @@ import {
   getRoom,
 } from './rooms.js';
 import { commitDetector } from '../stt/commit-detector.js';
-import { sttEngine } from '../stt/index.js';
+import { sttEngine, getEngineStatus, recordLatency } from '../stt/index.js';
 import { translateForRoom } from '../translation/index.js';
 import { extractAndPatch } from '../semantics/index.js';
 import { recordUsage } from '../metering/usage.js';
@@ -74,6 +74,7 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
           });
           connUsers.set(connId, { userId: msg.userId, roomId: msg.roomId });
           broadcastToRoom(msg.roomId, getRoomState(room));
+          ws.send(JSON.stringify(getEngineStatus()));
           await sttEngine.startSession({ roomId: msg.roomId, speakerId: msg.userId, speakLang: msg.speakLang });
           break;
         }
@@ -86,6 +87,7 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
             break;
           }
           const pcm16 = Buffer.from(msg.pcm16_base64, 'base64');
+          if (msg.seq % 50 === 0) log.info({ seq: msg.seq, bytes: pcm16.length }, 'audio_chunk');
           // Guarantee alignment for Int16Array
           const ab = pcm16.buffer.slice(pcm16.byteOffset, pcm16.byteOffset + pcm16.byteLength);
           const int16 = new Int16Array(ab);
@@ -117,6 +119,54 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
         case 'tag_speaker': {
           // Store speaker label for shared_mic mode post-processing
           log.info({ corrId, speakerLabel: msg.speakerLabel }, 'Speaker tagged');
+          break;
+        }
+
+        case 'transcript_text': {
+          const bound = connUsers.get(connId);
+          if (!bound || bound.userId !== msg.userId) {
+            ws.send(JSON.stringify({ type: 'error', code: 'AUTH', message: 'User ID mismatch' }));
+            break;
+          }
+          if (msg.isFinal) {
+            const startTs = Date.now();
+            // Commit as utterance and translate
+            const { nanoid } = await import('nanoid');
+            const utteranceId = nanoid(16);
+            const tNow = Date.now();
+
+            // Then commit (skip delta for final — commit is what matters)
+            broadcastToRoom(msg.roomId, {
+              type: 'utterance_commit',
+              roomId: msg.roomId,
+              speakerId: msg.userId,
+              utteranceId,
+              text: msg.text,
+              tStartMs: msg.tMs,
+              tEndMs: tNow,
+              langGuess: msg.langHint,
+            });
+
+            // Translate + semantics
+            await translateForRoom(msg.roomId, msg.userId, utteranceId, msg.text, msg.langHint);
+            const room = getRoom(msg.roomId);
+            if (room?.visualizeEnabled) {
+              await extractAndPatch(msg.roomId, utteranceId, msg.text);
+            }
+
+            // Track actual processing latency and push updated status
+            recordLatency(Date.now() - startTs);
+            ws.send(JSON.stringify(getEngineStatus()));
+          } else {
+            // Interim result — broadcast as delta
+            broadcastToRoom(msg.roomId, {
+              type: 'transcript_delta',
+              roomId: msg.roomId,
+              speakerId: msg.userId,
+              text: msg.text,
+              tMs: msg.tMs,
+            });
+          }
           break;
         }
       }

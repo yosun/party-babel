@@ -6,15 +6,17 @@ import { VisualizePanel } from '../components/VisualizePanel';
 import { EngineStatus } from '../components/EngineStatus';
 import { ExportMenu } from '../components/ExportMenu';
 import { SimulateButton } from '../components/SimulateButton';
-import { startAudioCapture } from '../lib/audio';
+import { isSpeechRecognitionSupported, startSpeechRecognition } from '../lib/speech';
 import type { InputMode } from '@party-babel/shared';
 
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
-  const [joined, setJoined] = useState(false);
-  const [recording, setRecording] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const [visualize, setVisualize] = useState(false);
   const stopRef = useRef<(() => void) | null>(null);
+  const sendRef = useRef<typeof send>(null!);
+  const joinOpts = useRef({ userId: '', displayName: '', speakLang: '', targetLang: '', inputMode: 'per_user_mic' as InputMode });
 
   // Read session params once on mount
   const [userId] = useState(() => sessionStorage.getItem('pb:userId') || 'guest');
@@ -24,45 +26,59 @@ export function RoomPage() {
   const [inputMode] = useState<InputMode>(() => (sessionStorage.getItem('pb:inputMode') || 'per_user_mic') as InputMode);
 
   const { connState, roomState, joinRoom, send, toggleVisualize, disconnect } = useRoom(roomId!);
+  sendRef.current = send;
 
-  // Join room on mount, cleanup mic + ws on unmount
+  // Keep join opts in sync (stable ref, no re-renders)
+  joinOpts.current = { userId, displayName, speakLang, targetLang, inputMode };
+
+  // Join room on mount, cleanup on unmount.
   useEffect(() => {
-    if (!joined && roomId) {
-      joinRoom({ userId, displayName, speakLang, targetLang, inputMode });
-      setJoined(true);
-    }
+    if (!roomId) return;
+    const timer = setTimeout(() => joinRoom({ ...joinOpts.current }), 0);
     return () => {
+      clearTimeout(timer);
       stopRef.current?.();
       stopRef.current = null;
       disconnect();
     };
-  }, [roomId, joined, joinRoom, userId, displayName, speakLang, targetLang, inputMode, disconnect]);
+  }, [roomId, joinRoom, disconnect]);
 
-  const toggleRecording = useCallback(async () => {
-    if (recording) {
+  const toggleListening = useCallback(() => {
+    setMicError(null);
+    if (listening) {
       stopRef.current?.();
       stopRef.current = null;
-      setRecording(false);
-    } else {
-      try {
-        const { stop } = await startAudioCapture((pcm16_base64, seq) => {
-          send({
-            type: 'audio_chunk',
-            roomId: roomId!,
-            userId,
-            seq,
-            pcm16_base64,
-            sampleRate: 16000,
-            channels: 1,
-          });
-        });
-        stopRef.current = stop;
-        setRecording(true);
-      } catch (err) {
-        console.error('Mic access denied:', err);
-      }
+      setListening(false);
+      return;
     }
-  }, [recording, roomId, userId, send]);
+
+    if (!isSpeechRecognitionSupported()) {
+      setMicError('Speech recognition is not supported in this browser. Use Chrome, Safari, or Edge.');
+      return;
+    }
+
+    const { stop } = startSpeechRecognition(speakLang, {
+      onResult({ transcript, isFinal }) {
+        sendRef.current({
+          type: 'transcript_text',
+          roomId: roomId!,
+          userId,
+          text: transcript,
+          langHint: speakLang,
+          isFinal,
+          tMs: Date.now(),
+        });
+      },
+      onError(error) {
+        setMicError(error);
+      },
+      onEnd() {
+        setListening(false);
+      },
+    });
+    stopRef.current = stop;
+    setListening(true);
+  }, [listening, roomId, userId, speakLang]);
 
   const handleToggleVisualize = useCallback(() => {
     const next = !visualize;
@@ -85,7 +101,7 @@ export function RoomPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <EngineStatus status={roomState.engineStatus} />
+          <EngineStatus status={roomState.engineStatus} connState={connState} />
           <SimulateButton roomId={roomId!} />
           <ExportMenu roomState={roomState} roomId={roomId!} />
 
@@ -101,16 +117,21 @@ export function RoomPage() {
           </button>
 
           <button
-            onClick={toggleRecording}
+            onClick={toggleListening}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
-              recording
+              listening
                 ? 'bg-red-600 text-white'
                 : 'bg-brand-600 text-white hover:bg-brand-500'
             }`}
           >
-            {recording && <span className="w-2 h-2 rounded-full bg-white recording-dot" />}
-            {recording ? 'Stop' : '🎤 Record'}
+            {listening && <span className="w-2 h-2 rounded-full bg-white recording-dot" />}
+            {listening ? 'Stop' : '🎤 Listen'}
           </button>
+          {micError && (
+            <span className="text-red-400 text-xs max-w-[200px] truncate" title={micError}>
+              ⚠ {micError}
+            </span>
+          )}
         </div>
       </header>
 

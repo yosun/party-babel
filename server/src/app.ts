@@ -5,7 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import { z } from 'zod';
 import { config } from './config.js';
 import { handleWsConnection } from './ws/handler.js';
-import { getEngineStatus } from './stt/index.js';
+import { getEngineStatus, initEngines } from './stt/index.js';
 import { simulateConversation } from './simulate.js';
 import { nanoid } from 'nanoid';
 
@@ -24,6 +24,9 @@ export async function buildApp() {
   await app.register(cors, { origin: true });
   await app.register(rateLimit, { max: 200, timeWindow: '1 minute' });
   await app.register(websocket);
+
+  // ── Validate API keys before accepting connections ────
+  await initEngines();
 
   // ── Health ────────────────────────────────────────────
   app.get('/health', async () => ({ status: 'ok', ts: Date.now() }));

@@ -5,12 +5,9 @@ import { MistralAPITranslator } from './mistral-api.js';
 import { getCachedTranslation, setCachedTranslation } from './cache.js';
 import { getRoom, broadcastToRoom } from '../ws/rooms.js';
 import { config } from '../config.js';
+import { isMistralApiValid } from '../stt/index.js';
 
-function createTranslationEngine(): TranslationEngine {
-  if (config.MISTRAL_API_KEY) {
-    console.log('[translation] Using Mistral API translator');
-    return new MistralAPITranslator();
-  }
+function createLocalTranslationEngine(): TranslationEngine {
   if (config.LOCAL_LLM_URL) {
     console.log('[translation] Using LLM HTTP translator');
     return new LocalLLMHttpTranslator();
@@ -19,7 +16,18 @@ function createTranslationEngine(): TranslationEngine {
   return new LocalHeuristicTranslator();
 }
 
-const engine = createTranslationEngine();
+let engine: TranslationEngine;
+
+function getTranslationEngine(): TranslationEngine {
+  if (engine) return engine;
+  if (config.MISTRAL_API_KEY && isMistralApiValid()) {
+    console.log('[translation] Using Mistral API translator');
+    engine = new MistralAPITranslator();
+  } else {
+    engine = createLocalTranslationEngine();
+  }
+  return engine;
+}
 
 /**
  * Translate a committed utterance for each unique target language in the room.
@@ -53,7 +61,7 @@ export async function translateForRoom(
     }
 
     try {
-      const translated = await engine.translate({ text, srcLang, targetLang });
+      const translated = await getTranslationEngine().translate({ text, srcLang, targetLang });
       setCachedTranslation(utteranceId, targetLang, text, translated);
       broadcastTranslation(roomId, speakerId, utteranceId, targetLang, translated);
     } catch (err) {

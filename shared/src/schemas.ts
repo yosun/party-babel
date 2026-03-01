@@ -46,12 +46,23 @@ export const TagSpeakerMsg = z.object({
   speakerLabel: z.string().min(1).max(100),
 });
 
+export const TranscriptTextMsg = z.object({
+  type: z.literal('transcript_text'),
+  roomId: z.string(),
+  userId: z.string(),
+  text: z.string().min(1).max(5000),
+  langHint: z.string().optional(),
+  isFinal: z.boolean(),
+  tMs: z.number(),
+});
+
 export const ClientMessage = z.discriminatedUnion('type', [
   JoinRoomMsg,
   AudioChunkMsg,
   SetTargetLangMsg,
   ToggleVisualizeMsg,
   TagSpeakerMsg,
+  TranscriptTextMsg,
 ]);
 export type ClientMessage = z.infer<typeof ClientMessage>;
 

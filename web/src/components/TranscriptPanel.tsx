@@ -43,7 +43,7 @@ export function TranscriptPanel({ utterances, drafts, users, targetLang }: Props
         {utterances.length === 0 && drafts.size === 0 && (
           <div className="text-center text-gray-600 mt-12">
             <p className="text-4xl mb-3">🎙️</p>
-            <p>Start speaking or click "Simulate conversation"</p>
+            <p>Click "Listen" to start speaking, or "Simulate conversation"</p>
           </div>
         )}
 

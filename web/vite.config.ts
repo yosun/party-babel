@@ -1,23 +1,27 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
+
+const API_TARGET = 'http://localhost:3001';
 
 export default defineConfig({
   plugins: [react()],
+  envDir: path.resolve(__dirname, '..'),
   server: {
     port: 5173,
+    strictPort: true,
     proxy: {
-      '/ws': {
-        target: 'ws://localhost:3001',
-        ws: true,
-      },
       '/api': {
-        target: 'http://localhost:3001',
+        target: API_TARGET,
+        changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:3001',
+        target: API_TARGET,
+        changeOrigin: true,
       },
       '/engine-status': {
-        target: 'http://localhost:3001',
+        target: API_TARGET,
+        changeOrigin: true,
       },
     },
   },

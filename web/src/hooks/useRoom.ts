@@ -33,7 +33,15 @@ export interface RoomState {
   engineStatus: { sttEngine: string; translationEngine: string; latencyMs: number; warnings: string[] } | null;
 }
 
-const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+function getWsUrl(): string {
+  // In production or proxied setups, use same origin.
+  // In dev, VITE_WS_URL env var can override (e.g. ws://localhost:3001/ws)
+  const override = import.meta.env.VITE_WS_URL as string | undefined;
+  if (override) return override;
+  return `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+}
+
+const wsUrl = getWsUrl();
 
 export function useRoom(roomId: string) {
   const { state: connState, send, connect, disconnect, onMessageRef } = useWebSocket(wsUrl);
@@ -62,8 +70,7 @@ export function useRoom(roomId: string) {
 
           case 'transcript_delta': {
             const newDrafts = new Map(prev.drafts);
-            const existing = newDrafts.get(msg.speakerId) || '';
-            newDrafts.set(msg.speakerId, existing + (existing ? ' ' : '') + msg.text);
+            newDrafts.set(msg.speakerId, msg.text);
             return { ...prev, drafts: newDrafts };
           }
 
