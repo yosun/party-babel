@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
-import type { WorldDiagram } from '@party-babel/shared';
+import type { WorldDiagram } from '@voxtral-flow/shared';
 
 interface Props {
   diagram: WorldDiagram | null;
@@ -11,6 +11,19 @@ mermaid.initialize({
   theme: 'dark',
   securityLevel: 'strict',
   fontFamily: 'ui-monospace, monospace',
+  themeVariables: {
+    primaryColor: '#1a1a3e',
+    primaryTextColor: '#e0e0ff',
+    primaryBorderColor: '#4c6ef5',
+    lineColor: '#4c6ef5',
+    secondaryColor: '#0d0d20',
+    tertiaryColor: '#111133',
+    edgeLabelBackground: '#0d0d20',
+    clusterBkg: '#0d0d2a',
+    clusterBorder: '#333366',
+    titleColor: '#aaaadd',
+    nodeTextColor: '#e0e0ff',
+  },
 });
 
 export function MermaidDiagram({ diagram }: Props) {
@@ -27,15 +40,19 @@ export function MermaidDiagram({ diagram }: Props) {
     }
   }, [diagram, editMode, overrideSource]);
 
+  const renderIdRef = useRef(0);
+
   const renderDiagram = async (source: string) => {
     if (!containerRef.current) return;
     setRenderError('');
+    // Use unique ID per render to avoid Mermaid duplicate-id errors
+    const id = `mermaid-svg-${++renderIdRef.current}`;
     try {
-      const { svg } = await mermaid.render('mermaid-svg', source);
+      const { svg } = await mermaid.render(id, source);
       containerRef.current.innerHTML = svg;
     } catch (err) {
       setRenderError(String(err));
-      containerRef.current.innerHTML = '';
+      // Keep the last successfully rendered diagram visible
     }
   };
 

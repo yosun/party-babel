@@ -1,4 +1,4 @@
-import type { UsageRecord } from '@party-babel/shared';
+import type { UsageRecord } from '@voxtral-flow/shared';
 
 /** In-memory usage metering (production would persist to DB) */
 const usageRecords: UsageRecord[] = [];

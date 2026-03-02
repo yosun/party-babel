@@ -6,7 +6,7 @@ import type { Utterance, RoomState } from '../hooks/useRoom';
 
 export function exportMarkdown(roomState: RoomState, roomId: string): string {
   const lines: string[] = [
-    `# Party Babel Session — ${roomId}`,
+    `# Voxtral Flow Session — ${roomId}`,
     `_Exported ${new Date().toISOString()}_`,
     '',
     '## Participants',

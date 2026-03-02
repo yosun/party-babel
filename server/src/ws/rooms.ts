@@ -1,4 +1,4 @@
-import type { InputMode } from '@party-babel/shared';
+import type { InputMode } from '@voxtral-flow/shared';
 import { clearWorldState } from '../semantics/index.js';
 
 export interface RoomUser {

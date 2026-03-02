@@ -1,4 +1,4 @@
-import { DEMO_SCRIPT } from '@party-babel/shared';
+import { DEMO_SCRIPT } from '@voxtral-flow/shared';
 import { broadcastToRoom, getOrCreateRoom, addUserToRoom } from './ws/rooms.js';
 import { translateForRoom } from './translation/index.js';
 import { extractAndPatch } from './semantics/index.js';
@@ -22,7 +22,7 @@ export function simulateConversation(roomId: string): void {
         userId: u.speakerId,
         displayName: u.displayName,
         speakLang: u.speakLang,
-        targetLang: u.speakLang === 'en' ? 'es' : 'en',
+        targetLang: u.targetLang ?? u.speakLang,
         connId: `sim-${u.speakerId}`,
         ws: { readyState: 0, send() {} } as unknown as WebSocket,
       });

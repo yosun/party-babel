@@ -2,7 +2,7 @@
   "name": "party-babel",
   "version": "1.0.0",
   "private": true,
-  "description": "Multilingual party room – realtime captions, translation & visualization",
+  "description": "Voxtral Flow — Realtime Speech to Universal Visual Language",
   "scripts": {
     "dev": "concurrently -n server,web -c blue,green \"pnpm --filter @party-babel/server dev\" \"pnpm --filter @party-babel/web dev\"",
     "build": "pnpm --filter @party-babel/shared build && pnpm --filter @party-babel/server build && pnpm --filter @party-babel/web build",

@@ -1,8 +1,10 @@
-# Party Babel 🗣️🌍
+# Voxtral Flow 🗣️🌍
 
-**Multilingual party room** — realtime captions, translation, and conversation visualization.
+**Realtime Speech to Universal Visual Language** — we stream speech into structured intelligence.
 
 Speak in any language. Everyone reads in theirs. Watch the conversation become a **concept graph**, a **Mermaid diagram**, and an **action board** — live.
+
+Supports: English, Español, Français, Deutsch, 日本語, 中文, Português, 한국어, Italiano, Русский, and **Esperanto**.
 
 Built for the **Mistral hackathon**. Runs **100% locally** (no cloud required), or one env var switches to the **Mistral cloud API**.
 
@@ -10,7 +12,7 @@ Built for the **Mistral hackathon**. Runs **100% locally** (no cloud required), 
 
 ## Why Mistral
 
-Party Babel is built around what’s uniquely strong in the Mistral ecosystem:
+Voxtral Flow is built around what's uniquely strong in the Mistral ecosystem:
 
 - **Voxtral Realtime (speech-to-text)** powers live captions and everything downstream.
 - **Deploy it your way**: run locally on Apple Silicon / CPU, self-host via vLLM on NVIDIA, or set `MISTRAL_API_KEY` for zero-setup cloud mode.
@@ -73,7 +75,7 @@ Click **Simulate** to see the full pipeline without audio/model setup.
    - Room ID: `demo`
    - Display Name: `Alice`
    - Speak: English
-   - Translate to: Spanish
+   - Translate to: Esperanto (or any language)
 3. Click **Join Room**
 4. Click **Visualize**
 5. Click **Simulate**
@@ -302,6 +304,11 @@ pnpm test -- --watch # re-run on changes
 ---
 
 ## Troubleshooting
+
+### Visualization goes blank
+
+- Clear browser cache and hard-refresh (`Cmd+Shift+R` / `Ctrl+Shift+R`)
+- If running a dev build, restart `pnpm dev` to pick up fixes
 
 ### Mic permission denied
 

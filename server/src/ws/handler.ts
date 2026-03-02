@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import { ClientMessage } from '@party-babel/shared';
+import { ClientMessage } from '@voxtral-flow/shared';
 import {
   getOrCreateRoom,
   addUserToRoom,
@@ -10,6 +10,7 @@ import {
 } from './rooms.js';
 import { commitDetector } from '../stt/commit-detector.js';
 import { sttEngine, getEngineStatus, recordLatency } from '../stt/index.js';
+import { autocorrect } from '../stt/autocorrect.js';
 import { translateForRoom } from '../translation/index.js';
 import { extractAndPatch } from '../semantics/index.js';
 import { recordUsage } from '../metering/usage.js';
@@ -128,6 +129,8 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
             ws.send(JSON.stringify({ type: 'error', code: 'AUTH', message: 'User ID mismatch' }));
             break;
           }
+          // Fix common STT misspellings (Voxtral, Mistral, etc.)
+          const correctedText = autocorrect(msg.text);
           if (msg.isFinal) {
             const startTs = Date.now();
             // Commit as utterance and translate
@@ -141,17 +144,17 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
               roomId: msg.roomId,
               speakerId: msg.userId,
               utteranceId,
-              text: msg.text,
+              text: correctedText,
               tStartMs: msg.tMs,
               tEndMs: tNow,
               langGuess: msg.langHint,
             });
 
             // Translate + semantics
-            await translateForRoom(msg.roomId, msg.userId, utteranceId, msg.text, msg.langHint);
+            await translateForRoom(msg.roomId, msg.userId, utteranceId, correctedText, msg.langHint);
             const room = getRoom(msg.roomId);
             if (room?.visualizeEnabled) {
-              await extractAndPatch(msg.roomId, utteranceId, msg.text);
+              await extractAndPatch(msg.roomId, utteranceId, correctedText);
             }
 
             // Track actual processing latency and push updated status
@@ -163,7 +166,7 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
               type: 'transcript_delta',
               roomId: msg.roomId,
               speakerId: msg.userId,
-              text: msg.text,
+              text: correctedText,
               tMs: msg.tMs,
             });
           }
@@ -195,7 +198,9 @@ export function handleWsConnection(ws: WebSocket, connId: string, log: { info: (
 
 // ── Wire up STT engine callbacks ────────────────────────
 commitDetector.onCommit(async (commit) => {
-  const { roomId, speakerId, utteranceId, text, tStartMs, tEndMs, langGuess } = commit;
+  const { roomId, speakerId, utteranceId, tStartMs, tEndMs, langGuess } = commit;
+  // Fix common STT misspellings (Voxtral, Mistral, etc.)
+  const text = autocorrect(commit.text);
 
   // Broadcast utterance_commit
   broadcastToRoom(roomId, {

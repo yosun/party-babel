@@ -110,6 +110,10 @@ describe('HeuristicExtractor', () => {
       expect(detectDiagramType('if else either option should we decide choice')).toBe('decision_tree');
     });
 
+    it('detects hierarchy keywords', () => {
+      expect(detectDiagramType('the parent had two children and a daughter who married')).toBe('hierarchy');
+    });
+
     it('defaults to architecture', () => {
       expect(detectDiagramType('hello world random text')).toBe('architecture');
     });

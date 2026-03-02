@@ -14,6 +14,23 @@ const SPEAKER_COLORS = [
   'text-cyan-400', 'text-rose-400',
 ];
 
+const LANG_BADGE: Record<string, string> = {
+  en: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  eo: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  ja: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+  es: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  fr: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+  de: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+  zh: 'bg-red-500/20 text-red-300 border-red-500/30',
+  pt: 'bg-green-500/20 text-green-300 border-green-500/30',
+  ko: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+  it: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+  ru: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+};
+function langBadgeClass(lang?: string) {
+  return LANG_BADGE[lang || ''] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+}
+
 export function TranscriptPanel({ utterances, drafts, users, targetLang }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +66,15 @@ export function TranscriptPanel({ utterances, drafts, users, targetLang }: Props
 
         {utterances.map((u) => (
           <div key={u.utteranceId} className="group" id={`utt-${u.utteranceId}`}>
-            <div className="flex items-start gap-2">
+            <div className="flex items-center gap-2">
               <span className={`font-semibold text-sm ${getColor(u.speakerId)}`}>
                 {getName(u.speakerId)}
               </span>
+              {u.langGuess && (
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${langBadgeClass(u.langGuess)}`}>
+                  {u.langGuess.toUpperCase()}
+                </span>
+              )}
               <span className="text-xs text-gray-600 mt-0.5">
                 {new Date(u.tStartMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>

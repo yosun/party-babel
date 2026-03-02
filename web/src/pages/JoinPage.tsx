@@ -13,6 +13,7 @@ const LANGUAGES = [
   { code: 'ko', label: '한국어' },
   { code: 'it', label: 'Italiano' },
   { code: 'ru', label: 'Русский' },
+  { code: 'eo', label: 'Esperanto' },
 ];
 
 export function JoinPage() {
@@ -20,7 +21,7 @@ export function JoinPage() {
   const [roomId, setRoomId] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [speakLang, setSpeakLang] = useState('en');
-  const [targetLang, setTargetLang] = useState('es');
+  const [targetLang, setTargetLang] = useState('en');
   const [inputMode, setInputMode] = useState<'per_user_mic' | 'shared_mic'>('per_user_mic');
 
   const handleJoin = () => {
@@ -44,9 +45,9 @@ export function JoinPage() {
         {/* Logo area */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-            Party Babel
+            Voxtral Flow
           </h1>
-          <p className="text-gray-400 mt-2">Multilingual conversations, visualized.</p>
+          <p className="text-gray-400 mt-2">Realtime speech to universal visual language.</p>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">

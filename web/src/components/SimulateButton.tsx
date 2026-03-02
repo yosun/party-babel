@@ -10,7 +10,11 @@ export function SimulateButton({ roomId }: Props) {
   const handleSimulate = async () => {
     setLoading(true);
     try {
-      await fetch('/api/simulate', {
+      // Use explicit URL to bypass Vite proxy issues
+      const base = import.meta.env.VITE_WS_URL
+        ? new URL(import.meta.env.VITE_WS_URL as string).origin
+        : '';
+      await fetch(`${base}/api/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId }),

@@ -29,12 +29,12 @@ importers:
       '@fastify/websocket':
         specifier: ^11.0.2
         version: 11.2.0
-      '@party-babel/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
+      '@voxtral-flow/shared':
+        specifier: workspace:*
+        version: link:../shared
       fastify:
         specifier: ^5.2.1
         version: 5.7.4
@@ -85,7 +85,7 @@ importers:
 
   web:
     dependencies:
-      '@party-babel/shared':
+      '@voxtral-flow/shared':
         specifier: workspace:*
         version: link:../shared
       d3:

@@ -12,13 +12,13 @@ export function ExportMenu({ roomState, roomId }: Props) {
 
   const handleExportMd = () => {
     const md = exportMarkdown(roomState, roomId);
-    downloadBlob(md, `party-babel-${roomId}.md`, 'text/markdown');
+    downloadBlob(md, `voxtral-flow-${roomId}.md`, 'text/markdown');
     setOpen(false);
   };
 
   const handleExportJson = () => {
     const json = exportJSON(roomState, roomId);
-    downloadBlob(json, `party-babel-${roomId}.json`, 'application/json');
+    downloadBlob(json, `voxtral-flow-${roomId}.json`, 'application/json');
     setOpen(false);
   };
 
@@ -26,7 +26,7 @@ export function ExportMenu({ roomState, roomId }: Props) {
     const svg = document.querySelector('.mermaid-container svg');
     if (svg) {
       const svgData = new XMLSerializer().serializeToString(svg);
-      downloadBlob(svgData, `party-babel-${roomId}-diagram.svg`, 'image/svg+xml');
+      downloadBlob(svgData, `voxtral-flow-${roomId}-diagram.svg`, 'image/svg+xml');
     }
     setOpen(false);
   };

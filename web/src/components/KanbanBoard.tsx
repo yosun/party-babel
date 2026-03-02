@@ -1,4 +1,4 @@
-import type { WorldTask } from '@party-babel/shared';
+import type { WorldTask } from '@voxtral-flow/shared';
 
 interface Props {
   tasks: WorldTask[];

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ServerMessage, ClientMessage } from '@party-babel/shared';
+import type { ServerMessage, ClientMessage } from '@voxtral-flow/shared';
 
 type ConnectionState = 'connecting' | 'connected' | 'disconnected';
 

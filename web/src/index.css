@@ -43,3 +43,23 @@
 .recording-dot {
   animation: recording-pulse 1.5s ease-in-out infinite;
 }
+
+/* Hub node breathing glow */
+@keyframes hub-breathe {
+  0%, 100% { opacity: 0.15; r: attr(r); }
+  50% { opacity: 0.3; }
+}
+.hub-pulse {
+  animation: hub-breathe 2.5s ease-in-out infinite;
+}
+
+/* Stat counter shimmer */
+@keyframes stat-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.stat-pill {
+  background: linear-gradient(90deg, rgba(76,110,245,0.15) 0%, rgba(76,110,245,0.3) 50%, rgba(76,110,245,0.15) 100%);
+  background-size: 200% 100%;
+  animation: stat-shimmer 3s ease-in-out infinite;
+}

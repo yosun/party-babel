@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useWebSocket } from './useWebSocket';
-import type { ServerMessage, InputMode } from '@party-babel/shared';
-import type { WorldPatch, WorldTask, WorldEntity, WorldRelation, WorldDiagram } from '@party-babel/shared';
+import type { ServerMessage, InputMode } from '@voxtral-flow/shared';
+import type { WorldPatch, WorldTask, WorldEntity, WorldRelation, WorldDiagram } from '@voxtral-flow/shared';
 
 export interface RoomUser {
   userId: string;

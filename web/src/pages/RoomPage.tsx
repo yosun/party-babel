@@ -92,7 +92,7 @@ export function RoomPage() {
       <header className="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-            Party Babel
+            Voxtral Flow
           </h1>
           <span className="text-gray-500 text-sm">/ {roomId}</span>
           <span className={`inline-block w-2 h-2 rounded-full ${

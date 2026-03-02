@@ -21,7 +21,7 @@ export interface WorldTask {
   sourceUtteranceId: string;
 }
 
-export type DiagramType = 'architecture' | 'journey' | 'timeline' | 'decision_tree';
+export type DiagramType = 'architecture' | 'journey' | 'timeline' | 'decision_tree' | 'hierarchy';
 
 export interface WorldDiagram {
   type: DiagramType;
@@ -106,78 +106,44 @@ export interface SimulatedUtterance {
   speakerId: string;
   displayName: string;
   speakLang: string;
+  targetLang?: string;
   text: string;
   delayMs: number;
 }
 
 export const DEMO_SCRIPT: SimulatedUtterance[] = [
-  // Scene-setting → few entities
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "Let's design our multiplayer game backend — GameClient, GameServer, and the full infrastructure.",
+  // ── Solo-hacker 1-minute demo ──────────────────────────
+  // Single speaker walks through the full architecture.
+  // Each utterance is crafted to trigger heuristic entity/relation/task extraction
+  // so the app literally visualizes itself as the presenter speaks.
+
+  // ── Act 1: Frontend ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "The Browser captures audio from the Microphone and sends it to our React frontend. React opens a persistent WebSocket connection to the Server.",
     delayMs: 0 },
 
-  // R1  GameClient connects_to LoadBalancer
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
-    text: "GameClient connects to LoadBalancer which routes traffic to the right GameServer instance.",
-    delayMs: 2500 },
-
-  // R2  GameServer uses Redis
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
-    text: "GameServer uses Redis para estado de sesión y sincronización entre instancias.",
-    delayMs: 5000 },
-
-  // R3  PlayerService depends_on Postgres
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "PlayerService depends on Postgres for profiles, inventories, and matchmaking records.",
-    delayMs: 7500 },
-
-  // R4  MatchMaker calls PlayerService
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
-    text: "MatchMaker calls PlayerService to fetch rankings and skill ratings before pairing.",
+  // ── Act 2: Speech Pipeline ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "The Server feeds audio to Voxtral, our speech-to-text engine. Voxtral calls the Mistral model for transcription. Each transcript feeds into the TranslationEngine.",
     delayMs: 10000 },
 
-  // R5  GameServer sends_to EventBus
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "GameServer sends to EventBus for async event processing and audit logging.",
-    delayMs: 12500 },
-
-  // R6  integrate Analytics with EventBus  +  task (we should)
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
-    text: "We should integrate Analytics with EventBus to track player behavior and retention.",
-    delayMs: 15000 },
-
-  // R7  Leaderboard calls Redis
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
-    text: "Leaderboard calls Redis para rankings en tiempo real con latencia mínima.",
-    delayMs: 17500 },
-
-  // Tasks: Now + Next
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "First deploy the GameServer cluster. Then configure LoadBalancer health checks.",
+  // ── Act 3: Translation + Caching ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "TranslationEngine uses Mistral for neural machine translation. TranslationEngine connects to Redis for caching repeated phrases.",
     delayMs: 20000 },
 
-  // R8  CDN connects_to AssetStore
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
-    text: "CDN connects to AssetStore for distributing game textures, models, and audio.",
-    delayMs: 22500 },
-
-  // R9  Monitor feeds Dashboard
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
-    text: "Monitor feeds Dashboard para métricas de rendimiento y alertas del sistema.",
-    delayMs: 25000 },
-
-  // R10  AntiCheat depends_on Analytics
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "AntiCheat depends on Analytics to detect suspicious patterns and flag accounts.",
-    delayMs: 27500 },
-
-  // R11  ChatService uses WebSocket
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
-    text: "ChatService uses WebSocket for real-time messaging between players in lobbies.",
+  // ── Act 4: Intelligence ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "ConceptExtractor analyzes every utterance. ConceptExtractor feeds entities and relations into the KnowledgeGraph. KnowledgeGraph feeds MermaidGenerator to produce live diagrams.",
     delayMs: 30000 },
 
-  // R12  integrate Streaming with CDN  +  Later task
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
-    text: "Later we can integrate Streaming with CDN for live tournament broadcasting.",
-    delayMs: 32500 },
+  // ── Act 5: Persistence ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "Server uses Prisma as the ORM. Prisma depends on Postgres for storing transcripts and world state.",
+    delayMs: 40000 },
+
+  // ── Act 6: Tasks ──
+  { speakerId: 'presenter', displayName: 'You', speakLang: 'en', targetLang: 'eo',
+    text: "First write integration tests for WebSocket. Next build the audio preprocessing pipeline. Later add end-to-end encryption.",
+    delayMs: 50000 },
 ];
