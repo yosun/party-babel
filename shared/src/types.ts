@@ -111,14 +111,73 @@ export interface SimulatedUtterance {
 }
 
 export const DEMO_SCRIPT: SimulatedUtterance[] = [
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en', text: "Welcome everyone! Let's discuss the architecture for our new real-time translation service.", delayMs: 0 },
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en', text: "The client captures mic audio and sends PCM frames over WebSocket to the server.", delayMs: 2000 },
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es', text: "El servidor procesa el audio con Voxtral para obtener la transcripción en tiempo real.", delayMs: 4000 },
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en', text: "Right. Then the server translates each committed utterance into every listener's target language.", delayMs: 6000 },
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en', text: "We should deploy the STT pipeline on Apple Silicon first, then add NVIDIA vLLM support.", delayMs: 8000 },
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es', text: "También necesitamos un tablero de acciones – cosas que hacer ahora, después, y más tarde.", delayMs: 10000 },
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en', text: "Let's create a concept graph showing how Client connects to Server, Server uses STT, and STT feeds Translation.", delayMs: 12000 },
-  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en', text: "Next we need to integrate the Mermaid diagram generator for architecture visualization.", delayMs: 14000 },
-  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en', text: "Todo: first set up the WebSocket pipeline, then add the translation layer, after that build the visualization.", delayMs: 16000 },
-  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es', text: "Si el usuario prefiere, podemos usar el modo de micrófono compartido con etiquetado manual de hablantes.", delayMs: 18000 },
+  // Scene-setting → few entities
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "Let's design our multiplayer game backend — GameClient, GameServer, and the full infrastructure.",
+    delayMs: 0 },
+
+  // R1  GameClient connects_to LoadBalancer
+  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
+    text: "GameClient connects to LoadBalancer which routes traffic to the right GameServer instance.",
+    delayMs: 2500 },
+
+  // R2  GameServer uses Redis
+  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
+    text: "GameServer uses Redis para estado de sesión y sincronización entre instancias.",
+    delayMs: 5000 },
+
+  // R3  PlayerService depends_on Postgres
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "PlayerService depends on Postgres for profiles, inventories, and matchmaking records.",
+    delayMs: 7500 },
+
+  // R4  MatchMaker calls PlayerService
+  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
+    text: "MatchMaker calls PlayerService to fetch rankings and skill ratings before pairing.",
+    delayMs: 10000 },
+
+  // R5  GameServer sends_to EventBus
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "GameServer sends to EventBus for async event processing and audit logging.",
+    delayMs: 12500 },
+
+  // R6  integrate Analytics with EventBus  +  task (we should)
+  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
+    text: "We should integrate Analytics with EventBus to track player behavior and retention.",
+    delayMs: 15000 },
+
+  // R7  Leaderboard calls Redis
+  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
+    text: "Leaderboard calls Redis para rankings en tiempo real con latencia mínima.",
+    delayMs: 17500 },
+
+  // Tasks: Now + Next
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "First deploy the GameServer cluster. Then configure LoadBalancer health checks.",
+    delayMs: 20000 },
+
+  // R8  CDN connects_to AssetStore
+  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
+    text: "CDN connects to AssetStore for distributing game textures, models, and audio.",
+    delayMs: 22500 },
+
+  // R9  Monitor feeds Dashboard
+  { speakerId: 'carlos', displayName: 'Carlos', speakLang: 'es',
+    text: "Monitor feeds Dashboard para métricas de rendimiento y alertas del sistema.",
+    delayMs: 25000 },
+
+  // R10  AntiCheat depends_on Analytics
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "AntiCheat depends on Analytics to detect suspicious patterns and flag accounts.",
+    delayMs: 27500 },
+
+  // R11  ChatService uses WebSocket
+  { speakerId: 'bob', displayName: 'Bob', speakLang: 'en',
+    text: "ChatService uses WebSocket for real-time messaging between players in lobbies.",
+    delayMs: 30000 },
+
+  // R12  integrate Streaming with CDN  +  Later task
+  { speakerId: 'alice', displayName: 'Alice', speakLang: 'en',
+    text: "Later we can integrate Streaming with CDN for live tournament broadcasting.",
+    delayMs: 32500 },
 ];

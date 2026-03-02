@@ -31,6 +31,13 @@ const STOP_WORDS = new Set([
   'you', 'he', 'she', 'it', 'they', 'me', 'us', 'him', 'her', 'them',
   'my', 'our', 'your', 'his', 'its', 'their', 'what', 'which', 'who',
   'whom', 'also', 'right', 'let', 'lets', "let's", 'get', 'got',
+  // Conversational noise
+  'welcome', 'everyone', 'today', 'hello', 'hey', 'hi', 'ok', 'okay',
+  'yeah', 'yes', 'sure', 'great', 'good', 'well', 'really', 'already',
+  'now', 'much', 'thing', 'things', 'new', 'going', 'first', 'second',
+  // Spanish noise (after accent stripping)
+  'el', 'la', 'los', 'las', 'del', 'en', 'que', 'para', 'por', 'con',
+  'es', 'ya', 'como', 'su', 'sus', 'nos', 'tiempo', 'tambin',
 ]);
 
 export function extractEntities(text: string, utteranceId: string): WorldEntity[] {
