@@ -1,3 +1,5 @@
+https://youtu.be/uZjVvo-bG3s
+
 # Voxtral Flow 🗣️🌍
 
 **Realtime Speech to Universal Visual Language** — we stream speech into structured intelligence.
